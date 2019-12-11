@@ -1,5 +1,28 @@
 # TI mmWave ROS Package (Customized)
 
+#### This package is revised based on customized ROS package developed by Leo Zhang.
+---
+### Process raw point cloud data
+```
+add a Radius Outlier Removal Filter and Hungarian filter designed myself, and publish point cloud data as PointCloud2 with velocity information.
+```
+---
+### Extract Objects
+```
+adopt DBscan to group points and extract objects radius, position and velocity.
+```
+---
+### Visualize in Rviz
+```
+show objects' position and velocity in Rviz and publish object information.
+```
+---
+### Add tf transform
+```
+to better use the radar and ROS package on mobile vehicle or robots, add listerner for odometry, to calculate and visualize position of object in world frame.
+```
+---
+
 #### Auhor and Maintainer: Leo Zhang
 #### Organization: University of Arizona
 #### Email: dr.leo.zhang@outlook.com
