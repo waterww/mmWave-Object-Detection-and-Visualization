@@ -3,18 +3,27 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+
 #include <sensor_msgs/point_cloud_conversion.h>
-#include <typeinfo>
 #include <geometry_msgs/Point.h>
+#include <nav_msgs/Odometry.h>
+#include <math.h>
+#include <typeinfo>
+
 #include "dbscan.h"
 
 using namespace std;
 
 //initialize a global publisher
 ros::Publisher marker_array_pub;
+ros::Publisher object_pub;
+
+//save odometry msg
+nav_msgs::Odometry odom;
 
 //int serial = 0;
 //std::vector<sensor_msgs::PointCloud2> frame_array(3);
+
 
 void visualize_object (const vector<Object> &object_array)
 {
@@ -27,7 +36,42 @@ void visualize_object (const vector<Object> &object_array)
   uint32_t shape_o = visualization_msgs::Marker::CYLINDER;
   //visualized shape of velocity
   uint32_t shape_v = visualization_msgs::Marker::ARROW;
-  
+  //visualized shape of car
+  uint32_t shape_c = visualization_msgs::Marker::CYLINDER;
+
+  visualization_msgs::Marker marker_c;
+  marker_c.header.frame_id = "/ti_mmwave";
+  marker_c.header.stamp = ros::Time::now();
+  marker_c.ns = "car";
+  marker_c.type = shape_c;
+  marker_c.action = visualization_msgs::Marker::ADD;
+  marker_c.lifetime = ros::Duration(0.3);
+
+  //Set car position, scale and color
+  marker_c.id = 0;
+
+  marker_c.pose.position.x = 0.0;
+  marker_c.pose.position.y = 0.0;
+  marker_c.pose.position.z = 0.15;
+  marker_c.pose.orientation.x = 0.0;
+  marker_c.pose.orientation.y = 0.0;
+  marker_c.pose.orientation.z = 0.0;
+  marker_c.pose.orientation.w = 1.0;
+
+  // Set the scale of the marker -- 1x1x1 here means 1m on a side
+  marker_c.scale.x = 0.6;
+  marker_c.scale.y = 0.6;
+  marker_c.scale.z = 0.3;
+
+  // Set the color -- be sure to set alpha to something non-zero!
+  marker_c.color.r = 0.0f;
+  marker_c.color.g = 0.0f;
+  marker_c.color.b = 1.0f;
+  marker_c.color.a = 1.0;
+      
+  array.markers.push_back(marker_c);
+
+
   for (int i = 0; i < number; i++ ){
     
     //create markers
@@ -49,7 +93,7 @@ void visualize_object (const vector<Object> &object_array)
 
     marker_o.action = marker_v.action = visualization_msgs::Marker::ADD;
 
-    marker_o.lifetime = marker_v.lifetime = ros::Duration(0.3);
+    marker_o.lifetime = marker_v.lifetime = ros::Duration(0.4);
 
     //set objects position
     marker_o.pose.position.x = object_array[i].x;
@@ -63,7 +107,7 @@ void visualize_object (const vector<Object> &object_array)
     //set objects scale
     marker_o.scale.x = 2*object_array[i].r;
     marker_o.scale.y = 2*object_array[i].r;
-    marker_o.scale.z = 1.0;
+    marker_o.scale.z = 0.5;//height
     
     //set objects color
     marker_o.color.r = 1.0f;
@@ -71,6 +115,8 @@ void visualize_object (const vector<Object> &object_array)
     marker_o.color.b = 0.0f;
     marker_o.color.a = 1.0;
 
+    //the velocity visualization part
+    /*===========================================
     //set velocity position
     geometry_msgs::Point start, end;
     double d = distance(object_array[i].x, object_array[i].y, 0.0, 0.0);
@@ -97,10 +143,10 @@ void visualize_object (const vector<Object> &object_array)
     marker_v.color.g = 1.0f;
     marker_v.color.b = 0.0f;
     marker_v.color.a = 1.0;
-    
+    ======================================*/
 
     array.markers.push_back(marker_o);
-    array.markers.push_back(marker_v);
+    //array.markers.push_back(marker_v);
 
   }
 
@@ -108,12 +154,17 @@ void visualize_object (const vector<Object> &object_array)
   marker_array_pub.publish(array);
 }
 
+void positioncallback (const nav_msgs::Odometry input){
+
+  odom = input;
+}
+
 void callback (const sensor_msgs::PointCloud2 input_cloud)
 {
   //sliding window
   /***vector<sensor_msgs::PointCloud2>::iterator it; 
   it = frame_array.begin();  
-  frame_array.erase(it);
+  frame_array.erase(it);/ti_mmwave"
   frame_array.push_back(input_cloud);
 
   sensor_msgs::PointCloud sum_cloud;
@@ -128,7 +179,11 @@ void callback (const sensor_msgs::PointCloud2 input_cloud)
 
   //create variables for points of Point and label
   vector<Point> points(N);
+  
+  //Cluster label array
   vector<int> labels;
+  
+  //Object array
   vector<Object> ob;
 
   //tansfer sensor_msgs::PointCloud to Point
@@ -143,8 +198,9 @@ void callback (const sensor_msgs::PointCloud2 input_cloud)
 
   }
 
-  //num is number of clusters
+  //num is number of clusters in the current frame
   int num = dbscan(points, labels, 0.7, 3);
+  
   cout<<""<<endl;
   cout<<"cluster size is "<<num<<endl;
 
@@ -160,12 +216,42 @@ void callback (const sensor_msgs::PointCloud2 input_cloud)
   if (labels.size() != 0 )
   {
 
-    ob = objects(points, labels, num);
+    //return object vector of current frame
+    ob = objects(points, labels, num, odom);
 
   }
 
-  visualize_object(ob);
+ 
+  //publish detected objects
+  ros::Time currenttime = ros::Time::now();
+
+  for(int i = 0; i < ob.size(); i++)
+  {
+      ti_mmwave_rospkg::Object single_object;
+
+
+      Object_world ob_in_world;
+      //transfer into world frame
+      ob_in_world = global_position_and_velocity(ob[i],odom);
+
+      single_object.header.frame_id =  "/world";
+      single_object.header.stamp = currenttime;
+      single_object.object_id = i;
+      single_object.radius = ob[i].r;
+      single_object.x_local = ob[i].x;
+      single_object.y_local = ob[i].y;
+      single_object.x_world = ob_in_world.x;
+      single_object.y_world = ob_in_world.y;
+      //single_object.vx_world = ob_in_world.vx;
+      //single_object.vy_world = ob_in_world.vy;
+      //single_object.abusolute_velocity = ob_in_world.absv;
+      single_object.relatice_velocity = ob[i].velocity;
+
+      object_pub.publish(single_object);
+  }
     
+  //show obstacles
+  visualize_object(ob);
 
 }
 
@@ -175,11 +261,16 @@ int main (int argc, char** argv)
   ros::init (argc, argv, "clustering");
   ros::NodeHandle nh;
 
-  // Create a ROS subscriber for the input point cloud
-  ros::Subscriber sub = nh.subscribe ("/filteredPCL", 1, callback);
+  // Get odom transform
+  ros::Subscriber sub2 = nh.subscribe("/integrated_to_init", 10, positioncallback);
 
+  // Create a ROS subscriber for the input point cloud
+  ros::Subscriber sub1 = nh.subscribe ("/filteredPCL", 1, callback);
+  
   // Create a ROS publisher for the output point cloud
   marker_array_pub = nh.advertise<visualization_msgs::MarkerArray> ("/object_marker", 1);
+
+  object_pub = nh.advertise<ti_mmwave_rospkg::Object> ("/object_info", 20);
 
   // Spin
   ros::spin ();

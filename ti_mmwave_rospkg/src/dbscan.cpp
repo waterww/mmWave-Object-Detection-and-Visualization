@@ -85,6 +85,50 @@ bool expand_cluster(const std::vector<Point> &input, int p, std::vector<int> &ou
     return true;
 }
 
+Object_world global_position_and_velocity(const Object &input_object, nav_msgs::Odometry &trans)
+{
+  Object_world ow;
+
+  //calculate yaw angle
+  double quatx = trans.pose.pose.orientation.x;
+  double quaty = trans.pose.pose.orientation.y;
+  double quatz = trans.pose.pose.orientation.z;
+  double quatw = trans.pose.pose.orientation.w;
+  
+  //get yaw angle
+  tf::Quaternion q(quatx,quatz,quaty,quatw);
+  tf::Matrix3x3 m(q);
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+
+  //caculate global position
+  double globalx = cos(yaw)*input_object.x + sin(yaw)*input_object.y + trans.pose.pose.position.x;
+  double globaly = -sin(yaw)*input_object.x + cos(yaw)*input_object.y + trans.pose.pose.position.y;
+
+  ow.x = globalx;
+  ow.y = globaly;
+
+  //get car velocity in world frame
+  //double carvx = trans.twist.twist.linear.x;
+  //double carvy = trans.twist.twist.linear.y;
+
+  //object velosity in local frame
+  //double d = distance(input_object.x, input_object.y, 0.0, 0.0);
+  //double ox = input_object.velocity * (input_object.x / d);
+  //double oy = input_object.velocity * (input_object.y / d);
+
+  //ow.vx = carvx + ox;
+  //ow.vy = carvy + oy;
+  //ow.absv = sqrt(ow.vx * ow.vx + ow.vy * ow.vy);
+
+  //print absolute positon and velocity of the object
+  std::cout << "center in world:" << "(" << ow.x << "," << ow.y << ")" << std::endl;
+  //std::cout << "velocity in world:" << ow.absv << std::endl;
+
+  return ow;    
+    
+}
+
 int dbscan(const std::vector<Point> &input, std::vector<int> &labels, double eps, int min)
 {
     int size = input.size();
@@ -133,8 +177,10 @@ std::vector<int> find( std::vector<int> &array, int x)
 
 }
 
-std::vector<Object> objects(const std::vector<Point> &input, std::vector<int> &labels, int num)
+std::vector<Object> objects(const std::vector<Point> &input, std::vector<int> &labels, int num, nav_msgs::Odometry trans)
 {
+    using namespace std;
+
     //size is the number of points
     int size = input.size();
     
@@ -203,14 +249,20 @@ std::vector<Object> objects(const std::vector<Point> &input, std::vector<int> &l
                 output_objects[m].r = 0.3;
             }
         }
+
         
         //print center position, velocty and radius of objects
         std::cout << "object:" << m+1 << std::endl;
-        std::cout << "center:" << output_objects[m].x << "," << output_objects[m].y << std::endl;
-        std::cout << "velocity:" << output_objects[m].velocity << std::endl;
         std::cout << "radius:" << output_objects[m].r<< std::endl;
+        std::cout << "center in local:" << "(" << output_objects[m].x << "," << output_objects[m].y << ")" << std::endl;
+        std::cout << "velocity in local:" << output_objects[m].velocity << std::endl;
+
+
+    
         
     }
+
+    
 
     //never forget to return
     return output_objects;

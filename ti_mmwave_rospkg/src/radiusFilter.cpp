@@ -32,7 +32,7 @@ void radius_cb (const pcl::PCLPointCloud2ConstPtr& cloud)
   // Perform radius outlier removal
   pcl::RadiusOutlierRemoval<pcl::PCLPointCloud2> radiusoutlier;
   radiusoutlier.setRadiusSearch(0.5);//set radius to search
-  radiusoutlier.setMinNeighborsInRadius(3);//set min number of points
+  radiusoutlier.setMinNeighborsInRadius(5);//set min number of points
   radiusoutlier.setInputCloud(cloud);
   radiusoutlier.filter(cloud_filtered);
 
