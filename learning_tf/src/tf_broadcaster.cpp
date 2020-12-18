@@ -36,7 +36,7 @@ int main(int argc, char** argv){
 
   ros::NodeHandle node;
   
-  //subscribe odometry and broadcast tf transform
+  //subscribe odometry  and broadcast tf transform
   ros::Subscriber sub = node.subscribe("/integrated_to_init", 10, &poseCallback);
   
 
