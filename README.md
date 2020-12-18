@@ -5,6 +5,7 @@ This package is revised based on [customized ROS package developed by Leo Zhang]
 ## Process Raw Point Cloud Data
 
 Add a Radius Outlier Removal Filter and Hungarian filter designed by myself, and publish point cloud data as PointCloud2 with velocity information.
+![image](https://github.com/waterww/mmWave-Object-Detection-and-Visualization/blob/master/optimization.gif "filterd point cloud")
 
 ## Extract Objects
 
@@ -21,4 +22,5 @@ To better use the radar and ROS package on mobile vehicle or robots, add listern
 ## Result
 
 [Video for fixed radar](https://1drv.ms/v/s!Ai9O9sZe1qg8jwgaK7Fe5u1Wq007)
+
 [Video for radar assembled on AGV](https://1drv.ms/v/s!Ai9O9sZe1qg8jwcBq-QCXvkEBM5v)
