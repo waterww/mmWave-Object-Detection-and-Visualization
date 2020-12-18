@@ -2,7 +2,7 @@
 
 This package is revised based on [customized ROS package developed by Leo Zhang](https://github.com/radar-lab/ti_mmwave_rospkg) and add the obstacle detection part.
 
-![image](https://ss1.bdstatic.com/70cFuXSh_Q1YnxGkpoWK1HF6hhy/it/u=2932990697,446875968&fm=26&gp=0.jpg)
+![image](https://github.com/waterww/mmWave-Object-Detection-and-Visualization/blob/master/IWR1443BOOST_6.jpg)
 
 ## Process Raw Point Cloud Data
 
