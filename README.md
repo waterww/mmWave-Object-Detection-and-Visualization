@@ -6,7 +6,7 @@ This package is revised based on [customized ROS package developed by Leo Zhang]
 
 ## Process Raw Point Cloud Data
 
-Add a Radius Outlier Removal Filter and Hungarian filter designed by myself, and publish point cloud data as PointCloud2 with velocity information.
+Add a Radius Outlier Removal Filter and Hungarian Algorithm based filter designed by myself, and publish point cloud data as PointCloud2 with velocity information.
 
 ## Extract Objects
 
